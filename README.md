@@ -39,6 +39,22 @@ python main.py
 - **Stability Analysis**: pick channel (sensor/actuator), run Bode/pole-zero/margins; export text report (gain/phase margins, poles/zeros).
 - **Signal Generator (Rust)**: set f/A/phase for two signals, pick operation (add/sub/mul), run Rust job; plots `x1, x2, y`.
 
+### Stability Analysis Notes
+- Transfer model per channel: \(G(s) = \frac{K}{\tau s + 1}\), discretized with ZOH for \(G(z)\).
+- Bode plot shows magnitude (dB) and phase (deg); pole-zero map uses s-plane positions.
+- Report includes poles/zeros (continuous/discrete) and gain/phase margins with crossover frequencies.
+- If `control` is missing, the UI will show a graceful error instead of crashing.
+
+### 3D Spatial View Notes
+- Uses `pyqtgraph.opengl` (GLViewWidget). Sensors are spheres, actuators are cubes placed at fixed coordinates.
+- Color and scale respond to live signal amplitude (absolute value clipped to [0,1]).
+- If OpenGL is unavailable, a placeholder message is shown instead of failing.
+
+### Rust Signal Generator Notes
+- CLI args: `--mode [add|sub|mul] --f1 --a1 --p1 --f2 --a2 --p2 --duration --dt`
+- Outputs JSON `{time, x1, x2, y}`; Python parses and plots.
+- `rust_bridge.py` returns deterministic mock data if the binary is missing or errors to keep the UI responsive.
+
 ## Project Layout
 - `main.py` — GUI, simulation loop, tabs, CSV export.
 - `sensor_models.py` — sensor models and defaults.
