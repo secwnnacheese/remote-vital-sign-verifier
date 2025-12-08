@@ -1,21 +1,32 @@
-# Remote Vital-Sign Admission Verifier
+# Integrated Instrumentation & Signal Simulation System
 
-Python desktop app for interactive multi-sensor, multi-actuator signal processing. Built with PySide6 + pyqtgraph for real-time plots (time and frequency domains).
+PySide6 + pyqtgraph desktop app for multi-sensor, multi-actuator simulation with stability analysis, 3D spatial visualization, and Rust-backed signal generation.
 
-## Features
-- 6 sensor inputs (accelerometer, gyroscope, pressure insole, waist IMU, barometric, proximity) with sliders for physical inputs.
-- 6 actuator controls (haptic, cuff, servo brace, alarm, LED array, FES) with override sliders.
-- Linear coupling matrix `v = C * y` to map sensors → actuators.
-- Real-time time-domain and FFT plots; coupling overview table; start/stop; CSV export of buffers.
-- Modular models: first-order sensor/actuator dynamics with tunable gain/offset/noise/time constants.
+## Highlights
+- 6 sensors + 6 actuators with sliders for physical inputs and overrides; linear coupling matrix `v = C * y`.
+- Real-time time-domain and FFT plots; CSV export of buffers.
+- Stability tab: s/z-domain analysis via `control`, Bode magnitude/phase, pole-zero map, gain/phase margins, report export.
+- 3D tab: sensor/actuator placement using `pyqtgraph.opengl` (spheres/cubes scale and recolor with amplitude).
+- Rust tab: two-signal generator (add/sub/mul) computed by Rust binary; Python parses JSON and plots `x1, x2, y`.
 
 ## Requirements
-- Python 3.x
-- PySide6, pyqtgraph, numpy, scipy (signal_utils uses FFT via numpy; scipy optional for future filtering)
+- Python 3.10+
+- PySide6, pyqtgraph, numpy, scipy, control
+- For 3D view: `pyqtgraph[opengl]` and working OpenGL drivers
+- Rust toolchain (for building the backend binary)
 
-Install (pip):
+Install Python deps:
 ```bash
-pip install PySide6 pyqtgraph numpy scipy
+pip install PySide6 pyqtgraph numpy scipy control
+# optional for 3D
+pip install "pyqtgraph[opengl]"
+```
+
+## Build Rust backend
+```bash
+cd backend_rust
+cargo build --release
+# binary expected at backend_rust/target/release/rvsv_rust (rvsv_rust.exe on Windows)
 ```
 
 ## Run
@@ -23,20 +34,24 @@ pip install PySide6 pyqtgraph numpy scipy
 python main.py
 ```
 
+## Tabs and Usage
+- **Instrumentation System**: sensor/actuator sliders, time/freq plots, coupling table, CSV export; 3D spatial view if OpenGL available.
+- **Stability Analysis**: pick channel (sensor/actuator), run Bode/pole-zero/margins; export text report (gain/phase margins, poles/zeros).
+- **Signal Generator (Rust)**: set f/A/phase for two signals, pick operation (add/sub/mul), run Rust job; plots `x1, x2, y`.
+
 ## Project Layout
-- `main.py` — GUI, simulation loop, plots, CSV export.
-- `sensor_models.py` — sensor classes and defaults.
-- `actuator_models.py` — actuator classes and defaults.
+- `main.py` — GUI, simulation loop, tabs, CSV export.
+- `sensor_models.py` — sensor models and defaults.
+- `actuator_models.py` — actuator models and defaults.
 - `system_model.py` — coupling manager, buffers, CSV helper.
 - `signal_utils.py` — FFT helper.
-
-## Usage Notes
-- Start/Stop simulation from the bottom bar; status shows the loop rate (default 100 Hz).
-- Left tabs: adjust sensor physical inputs and actuator overrides.
-- Right tabs: view time-domain curves, FFT for selected channel, and the coupling matrix table.
-- Export CSV saves buffered time, sensors, and actuator effects (`simulation_log.csv` by default).
+- `stability_analysis.py` — control-based Bode/pole-zero/margins/report.
+- `visualizer_3d.py` — OpenGL spatial view for sensors/actuators.
+- `rust_bridge.py` — subprocess bridge to Rust binary (mock fallback if missing).
+- `backend_rust/src/main.rs` — Rust CLI producing JSON (time, x1, x2, y).
 
 ## Extending
-- Modify coupling in `system_model.py` (`self.coupling_matrix`) to experiment with mappings.
-- Tune sensor/actuator parameters in their constructors (gain, noise_std, time_constant, saturation).
-- Add filtering or control logic by extending the simulation step in `system_model.CouplingManager`.
+- Adjust coupling matrix in `system_model.py`.
+- Tune gains/time constants/noise/saturation in sensor/actuator params.
+- Replace Rust math with your own operations, keeping the JSON contract.
+- Add filtering/control law inside `CouplingManager.step`.
