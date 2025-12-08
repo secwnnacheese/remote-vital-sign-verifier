@@ -39,3 +39,11 @@ simulation_log.csv
 # OS
 .DS_Store
 Thumbs.db
+
+# Build artifacts (Rust, Visual Studio)
+backend_rust/target/
+target/
+.vs/
+*.exe
+*.dll
+*.pdb
